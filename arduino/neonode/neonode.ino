@@ -9,7 +9,7 @@
 #define NEOPIXEL_PIN 12
 #define NUM_PIXELS 3
 #define RGB_SETTING NEO_GRB
-const char* STRIP_LAYOUT = "strip";
+const char* STRIP_TYPE = "strip";
 const bool SUPPORTS_RGBW = false;
 
 WebServer server(80);
@@ -52,7 +52,7 @@ void sendHeartbeat() {
 void sendNeopixelInfo() {
   StaticJsonDocument<JSON_OBJECT_SIZE(3)> doc;
   doc["num_pixels"] = NUM_PIXELS;
-  doc["strip_layout"] = STRIP_LAYOUT;
+  doc["strip_type"] = STRIP_TYPE;
   doc["supports_rgbw"] = SUPPORTS_RGBW;
   
   String res;
