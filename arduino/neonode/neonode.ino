@@ -14,6 +14,11 @@
 const char* STRIP_TYPE = "strip";
 const bool SUPPORTS_RGBW = false;
 
+// Set static IP address.
+IPAddress localIP(192, 168, 0, 110);
+IPAddress gateway(192, 168, 0, 1);
+IPAddress subnet(255, 255, 255, 0);
+
 WebServer server(80);
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
 
@@ -24,6 +29,11 @@ void setup() {
   pixels.begin();
   allOff();
   pixels.show();
+
+  // Configures static IP address
+  if (!WiFi.config(localIP, gateway, subnet)) {
+    Serial.println("STA Failed to configure");
+  }
 
   while (WiFi.status() != WL_CONNECTED) {
       delay(500);
