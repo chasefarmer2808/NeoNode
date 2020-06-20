@@ -20,15 +20,15 @@ IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 WebServer server(80);
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
+Adafruit_NeoPixel neoPixel = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
 
 void setup() {
   Serial.begin(115200);
   WiFi.begin(ssid, password);
-  pixels.setBrightness(BRIGHTNESS);
-  pixels.begin();
+  neoPixel.setBrightness(BRIGHTNESS);
+  neoPixel.begin();
   allOff();
-  pixels.show();
+  neoPixel.show();
 
   // Configures static IP address
   if (!WiFi.config(localIP, gateway, subnet)) {
@@ -55,10 +55,10 @@ void loop() {
 }
 
 void allOff() {
-    for (int i = 0; i < pixels.numPixels(); i++) {
-        pixels.setPixelColor(i, 0);
+    for (int i = 0; i < neoPixel.numPixels(); i++) {
+        neoPixel.setPixelColor(i, 0);
     }
-    pixels.show();
+    neoPixel.show();
 }
 
 void printConnectionInfo() {
@@ -103,20 +103,29 @@ void setColor() {
   // Set pixels based on range.
   for (int i = startPixel; i <= endPixel; i++) {
     if (SUPPORTS_RGBW) {
-      pixels.setPixelColor(i, red, green, blue, alpha);
+      neoPixel.setPixelColor(i, red, green, blue, alpha);
     }
     else {
-      pixels.setPixelColor(i, red, green, blue);
+      neoPixel.setPixelColor(i, red, green, blue);
     }
-    pixels.show();
+    neoPixel.show();
   }
 }
 
 void sendNeopixelInfo() {
-  StaticJsonDocument<JSON_OBJECT_SIZE(3)> doc;
+  // Size of json object = number of static data + num pixels in neopixel strip + 1 for array item.
+  const size_t CAPACITY = 3 + NUM_PIXELS + 1;
+  
+  StaticJsonDocument<JSON_OBJECT_SIZE(CAPACITY)> doc;
   doc["num_pixels"] = NUM_PIXELS;
   doc["strip_type"] = STRIP_TYPE;
   doc["supports_rgbw"] = SUPPORTS_RGBW;
+
+  JsonArray pixels = doc.createNestedArray("pixels");
+
+  for (int i = 0; i < NUM_PIXELS; i++) {
+    pixels.add(neoPixel.getPixelColor(i));
+  }
   
   String res;
   serializeJson(doc, res);
