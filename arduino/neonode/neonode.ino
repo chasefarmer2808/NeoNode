@@ -73,24 +73,15 @@ void sendHeartbeat() {
 }
 
 void setColor() {
-  int red, green, blue, alpha, startPixel, endPixel;
+  int color, startPixel, endPixel;
 
   // Parse request query params.
   for (int i = 0; i < server.args(); i++) {
     String currParamName = server.argName(i);
     int currParam = server.arg(i).toInt();
 
-    if (currParamName == "red") {
-      red = currParam;
-    }
-    else if (currParamName == "green") {
-      green = currParam;
-    }
-    else if (currParamName == "blue") {
-      blue = currParam;
-    }
-    else if (currParamName == "alpha") {
-      alpha = currParam;
+    if (currParamName == "color") {
+      color = currParam;
     }
     else if (currParamName == "start") {
       startPixel = currParam;
@@ -102,12 +93,7 @@ void setColor() {
 
   // Set pixels based on range.
   for (int i = startPixel; i <= endPixel; i++) {
-    if (SUPPORTS_RGBW) {
-      neoPixel.setPixelColor(i, red, green, blue, alpha);
-    }
-    else {
-      neoPixel.setPixelColor(i, red, green, blue);
-    }
+    neoPixel.setPixelColor(i, color);
     neoPixel.show();
   }
 }
