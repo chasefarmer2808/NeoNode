@@ -1,5 +1,5 @@
 #include <WiFi.h>
-#include <WebServer.h>
+#include "ESPAsyncWebServer.h"
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
 
@@ -19,7 +19,7 @@ IPAddress localIP(192, 168, 0, 110);
 IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
-WebServer server(80);
+AsyncWebServer server(80);
 Adafruit_NeoPixel neoPixel = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
 
 void setup() {
@@ -42,17 +42,15 @@ void setup() {
 
   printConnectionInfo();
 
-  server.on("/", sendHeartbeat);
-  server.on("/neopixel", setColor);
-  server.on("/neopixel/info", sendNeopixelInfo);
+  server.on("/", HTTP_GET, sendHeartbeat);
+  //server.on("/neopixel", HTTP_GET, setColor);
+  server.on("/neopixel/info", HTTP_GET, sendNeopixelInfo);
 
   server.begin();
   Serial.println("HTTP server started");
 }
 
-void loop() {
-  server.handleClient();
-}
+void loop() {}
 
 void allOff() {
     for (int i = 0; i < neoPixel.numPixels(); i++) {
@@ -68,11 +66,12 @@ void printConnectionInfo() {
   Serial.println(WiFi.localIP());
 }
 
-void sendHeartbeat() {
-  server.send(200, "text/plain", "Success");
+void sendHeartbeat(AsyncWebServerRequest *request) {
+  request->send(200, "text/plain", "Success");
 }
 
-void setColor() {
+/*
+void setColor(AsyncWebServerRequest *request) {
   int color, startPixel, endPixel;
 
   // Parse request query params.
@@ -97,8 +96,9 @@ void setColor() {
     neoPixel.show();
   }
 }
+*/
 
-void sendNeopixelInfo() {
+void sendNeopixelInfo(AsyncWebServerRequest *request) {
   // Size of json object = number of static data + num pixels in neopixel strip + 1 for array item.
   const size_t CAPACITY = 3 + NUM_PIXELS + 1;
   
@@ -116,5 +116,5 @@ void sendNeopixelInfo() {
   String res;
   serializeJson(doc, res);
   
-  server.send(200, "application/json", res);
+  request->send(200, "application/json", res);
 }
