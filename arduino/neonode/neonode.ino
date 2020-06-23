@@ -1,5 +1,6 @@
 #include <WiFi.h>
 #include "ESPAsyncWebServer.h"
+#include "AsyncJson.h"
 #include <Adafruit_NeoPixel.h>
 #include <ArduinoJson.h>
 
@@ -20,6 +21,7 @@ IPAddress gateway(192, 168, 0, 1);
 IPAddress subnet(255, 255, 255, 0);
 
 AsyncWebServer server(80);
+
 Adafruit_NeoPixel neoPixel = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
 
 void setup() {
@@ -43,7 +45,7 @@ void setup() {
   printConnectionInfo();
 
   server.on("/", HTTP_GET, sendHeartbeat);
-  //server.on("/neopixel", HTTP_GET, setColor);
+  server.on("/neopixel", HTTP_POST, setPixels);
   server.on("/neopixel/info", HTTP_GET, sendNeopixelInfo);
 
   server.begin();
@@ -70,33 +72,28 @@ void sendHeartbeat(AsyncWebServerRequest *request) {
   request->send(200, "text/plain", "Success");
 }
 
-/*
-void setColor(AsyncWebServerRequest *request) {
-  int color, startPixel, endPixel;
-
-  // Parse request query params.
-  for (int i = 0; i < server.args(); i++) {
-    String currParamName = server.argName(i);
-    int currParam = server.arg(i).toInt();
-
-    if (currParamName == "color") {
-      color = currParam;
-    }
-    else if (currParamName == "start") {
-      startPixel = currParam;
-    }
-    else if (currParamName == "end") {
-      endPixel = currParam;
-    }
+void setPixels(AsyncWebServerRequest *request) {
+  // Make sure body is not empty.
+  if (!request->hasParam("pixels", true)) {
+    return request->send(400, "text/plain", "Pixel color array required.");
   }
 
-  // Set pixels based on range.
-  for (int i = startPixel; i <= endPixel; i++) {
-    neoPixel.setPixelColor(i, color);
+  // Need to build a special size variable.
+  const size_t ARRAY_SIZE = JSON_ARRAY_SIZE(NUM_PIXELS);
+  String rawArray = request->getParam("pixels", true)->value();
+  StaticJsonDocument<ARRAY_SIZE> arrayBuf;
+  deserializeJson(arrayBuf, rawArray);
+  JsonArray colorArray = arrayBuf.as<JsonArray>();
+  
+  for (int i = 0; i < NUM_PIXELS; i++) {
+    neoPixel.setPixelColor(i, colorArray[i].as<uint32_t>());
+
+    // For some reason, putting this in the loop makes the first pixel the correct color.
     neoPixel.show();
   }
+  
+  request->send(200);
 }
-*/
 
 void sendNeopixelInfo(AsyncWebServerRequest *request) {
   // Size of json object = number of static data + num pixels in neopixel strip + 1 for array item.
