@@ -59,6 +59,7 @@ void setup() {
 }
 
 void loop() {
+  processAnimation();
 }
 
 void allOff() {
@@ -73,6 +74,24 @@ void printConnectionInfo() {
   Serial.println("WiFi connected.");
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
+}
+
+void processAnimation() {
+  if (selectedAnimation == ANIMATIONS[0]) {
+    allOff();
+    while (animationEnabled()) {
+      neoPixel.setPixelColor(0, 255, 0, 0);
+      neoPixel.show();
+      delay(500);
+      neoPixel.setPixelColor(0, 0, 0, 0);
+      neoPixel.show();
+      delay(500);
+    }
+  }
+}
+
+bool animationEnabled() {
+  return selectedAnimation != "";
 }
 
 void sendHeartbeat(AsyncWebServerRequest *request) {
