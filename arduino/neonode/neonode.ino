@@ -80,25 +80,30 @@ void printConnectionInfo() {
 void processAnimation() {
   if (activeAnimation == ANIMATIONS[0]) {
     allOff();
-    while (animationEnabled()) {
-      neoPixel.setPixelColor(0, 255, 0, 0);
-      neoPixel.show();
-      delay(100);
-
-      // Prevents race condition of animation getting disabled after we've already entered this loop.
-      if (!animationEnabled()) {
-        break;
-      }
-      
-      neoPixel.setPixelColor(0, 0, 0, 0);
-      neoPixel.show();
-      delay(100);
-    }
+    playRainbowAnimation();
   }
 }
 
 bool animationEnabled() {
   return activeAnimation != ANIM_DISABLED;
+}
+
+void playRainbowAnimation() {
+  uint16_t i, j;
+  
+  while (animationEnabled()) {
+    for (i = 0; i < 256; i++) {
+      for (j = 0; j < neoPixel.numPixels(); j++) {
+        neoPixel.setPixelColor(j, Wheel((i + j) & 255));
+
+        if (!animationEnabled()) {
+          return;
+        }
+      }
+      neoPixel.show();
+      delay(20);
+    }
+  }
 }
 
 void sendHeartbeat(AsyncWebServerRequest *request) {
@@ -188,4 +193,19 @@ void sendNeopixelInfo(AsyncWebServerRequest *request) {
   serializeJson(doc, res);
   
   request->send(200, "application/json", res);
+}
+
+// Input a value 0 to 255 to get a color value.
+// The colours are a transition r - g - b - back to r.
+uint32_t Wheel(byte WheelPos) {
+  WheelPos = 255 - WheelPos;
+  if(WheelPos < 85) {
+    return neoPixel.Color(255 - WheelPos * 3, 0, WheelPos * 3);
+  }
+  if(WheelPos < 170) {
+    WheelPos -= 85;
+    return neoPixel.Color(0, WheelPos * 3, 255 - WheelPos * 3);
+  }
+  WheelPos -= 170;
+  return neoPixel.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
 }
