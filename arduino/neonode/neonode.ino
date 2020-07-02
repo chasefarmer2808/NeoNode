@@ -27,7 +27,7 @@ AsyncWebServer server(80);
 
 Adafruit_NeoPixel neoPixel = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
 
-String selectedAnimation = "";
+String activeAnimation = "";
 
 void setup() {
   Serial.begin(115200);
@@ -77,7 +77,7 @@ void printConnectionInfo() {
 }
 
 void processAnimation() {
-  if (selectedAnimation == ANIMATIONS[0]) {
+  if (activeAnimation == ANIMATIONS[0]) {
     allOff();
     while (animationEnabled()) {
       neoPixel.setPixelColor(0, 255, 0, 0);
@@ -91,7 +91,7 @@ void processAnimation() {
 }
 
 bool animationEnabled() {
-  return selectedAnimation != "";
+  return activeAnimation != "";
 }
 
 void sendHeartbeat(AsyncWebServerRequest *request) {
@@ -143,13 +143,13 @@ void setAnimation(AsyncWebServerRequest *request) {
   }
 
   // Toggle animation.
-  if (selectedAnimation == animationId) {
+  if (activeAnimation == animationId) {
     // Disable animation.
-    selectedAnimation = "";
+    activeAnimation = "";
   }
   else {
     // Enable animation
-    selectedAnimation = animationId;
+    activeAnimation = animationId;
   }
   
   request->send(200);
@@ -163,7 +163,7 @@ void sendNeopixelInfo(AsyncWebServerRequest *request) {
   doc["num_pixels"] = NUM_PIXELS;
   doc["strip_type"] = STRIP_TYPE;
   doc["supports_rgbw"] = SUPPORTS_RGBW;
-  doc["selected_animation"] = selectedAnimation;
+  doc["active_animation"] = activeAnimation;
 
   JsonArray pixels = doc.createNestedArray("pixels");
 
