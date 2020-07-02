@@ -13,7 +13,8 @@
 #define BRIGHTNESS 50
 #define RGB_SETTING NEO_GRB
 
-const char* STRIP_TYPE = "strip";
+const char *STRIP_TYPE = "strip";
+const char *ANIM_DISABLED = "\0";
 // Must be unique.
 const char* ANIMATIONS[] = {"Rainbow"};
 const bool SUPPORTS_RGBW = false;
@@ -27,7 +28,7 @@ AsyncWebServer server(80);
 
 Adafruit_NeoPixel neoPixel = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
 
-String activeAnimation = "";
+String activeAnimation = ANIM_DISABLED;
 
 void setup() {
   Serial.begin(115200);
@@ -82,16 +83,22 @@ void processAnimation() {
     while (animationEnabled()) {
       neoPixel.setPixelColor(0, 255, 0, 0);
       neoPixel.show();
-      delay(500);
+      delay(100);
+
+      // Prevents race condition of animation getting disabled after we've already entered this loop.
+      if (!animationEnabled()) {
+        break;
+      }
+      
       neoPixel.setPixelColor(0, 0, 0, 0);
       neoPixel.show();
-      delay(500);
+      delay(100);
     }
   }
 }
 
 bool animationEnabled() {
-  return activeAnimation != "";
+  return activeAnimation != ANIM_DISABLED;
 }
 
 void sendHeartbeat(AsyncWebServerRequest *request) {
@@ -145,14 +152,14 @@ void toggleAnimation(AsyncWebServerRequest *request) {
   // Toggle animation.
   if (activeAnimation == animationId) {
     // Disable animation.
-    activeAnimation = "";
+    activeAnimation = ANIM_DISABLED;
   }
   else {
     // Enable animation
     activeAnimation = animationId;
   }
   
-  request->send(200);
+  request->send(200, "text/plain", activeAnimation);
 }
 
 void sendNeopixelInfo(AsyncWebServerRequest *request) {
