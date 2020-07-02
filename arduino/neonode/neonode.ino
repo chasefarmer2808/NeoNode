@@ -9,14 +9,14 @@
 // Update these values for your specific Neopixel strip.
 #define NEOPIXEL_PIN 12
 #define NUM_PIXELS 3
-#define NUM_ANIMATIONS 1
+#define NUM_ANIMATIONS 2
 #define BRIGHTNESS 50
 #define RGB_SETTING NEO_GRB
 
 const char *STRIP_TYPE = "strip";
 const char *ANIM_DISABLED = "\0";
 // Must be unique.
-const char* ANIMATIONS[] = {"Rainbow"};
+const char* ANIMATIONS[] = {"Rainbow", "Meteor Rain"};
 const bool SUPPORTS_RGBW = false;
 
 // Set static IP address.
@@ -93,7 +93,7 @@ void playRainbowAnimation() {
   
   while (animationEnabled()) {
     for (i = 0; i < 256; i++) {
-      for (j = 0; j < neoPixel.numPixels(); j++) {
+      for (j = 0; j < NUM_PIXELS; j++) {
         neoPixel.setPixelColor(j, Wheel((i + j) & 255));
 
         if (!animationEnabled()) {
@@ -103,6 +103,32 @@ void playRainbowAnimation() {
       neoPixel.show();
       delay(20);
     }
+  }
+}
+
+void playMeteorRainAnimation() {
+  uint16_t i, j, k;
+  byte r, g, b = 0xff;
+  byte meteorSize = 10;
+  byte meteorTrailDecay = 64;
+  boolean meteroRandomDecay = true;
+  int speedDelay = 30;
+
+  for (i = 0; i < NUM_PIXELS * 2; i++) {
+    for (j = 0; j < NUM_PIXELS; j++) {
+      if (random(10) < 5) {
+        fadeToBlack(j, meteorTrailDecay);
+      }
+    }
+
+    for (k = 0; k < meteorSize; k++) {
+      if ((i - j < NUM_PIXELS) && (i - j >= 0)) {
+        neoPixel.setPixelColor(i - j, r, g, b);
+      }
+    }
+
+    neoPixel.show();
+    delay(speedDelay);
   }
 }
 
@@ -208,4 +234,21 @@ uint32_t Wheel(byte WheelPos) {
   }
   WheelPos -= 170;
   return neoPixel.Color(WheelPos * 3, 255 - WheelPos * 3, 0);
+}
+
+void fadeToBlack(int pixelNum, byte fadeValue) {
+  uint32_t oldColor;
+  uint8_t r, g, b;
+  int value;
+
+  oldColor = neoPixel.getPixelColor(pixelNum);
+  r = (oldColor & 0x00ff0000UL) >> 16;
+  g = (oldColor & 0x0000ff00UL) >> 8;
+  b = (oldColor & 0x000000ffUL);
+
+  r = (r<=10)? 0 : (int) r-(r*fadeValue/256);
+  g = (g<=10)? 0 : (int) g-(g*fadeValue/256);
+  b = (b<=10)? 0 : (int) b-(b*fadeValue/256);
+
+  neoPixel.setPixelColor(pixelNum, r, g, b);
 }
