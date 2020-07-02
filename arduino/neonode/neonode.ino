@@ -52,7 +52,7 @@ void setup() {
   server.on("/", HTTP_GET, sendHeartbeat);
   server.on("/neopixel", HTTP_POST, setPixels);
   server.on("/neopixel/info", HTTP_GET, sendNeopixelInfo);
-  server.on("/animation", HTTP_POST, setAnimation);
+  server.on("/animation", HTTP_POST, toggleAnimation);
 
   server.begin();
   Serial.println("HTTP server started");
@@ -121,7 +121,7 @@ void setPixels(AsyncWebServerRequest *request) {
   request->send(200);
 }
 
-void setAnimation(AsyncWebServerRequest *request) {
+void toggleAnimation(AsyncWebServerRequest *request) {
   // Make sure body is not empty.
   if (!request->hasParam("animation", true)) {
     return request->send(400, "text/plain", "Animation ID required.");
