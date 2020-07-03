@@ -29,6 +29,7 @@ AsyncWebServer server(80);
 Adafruit_NeoPixel neoPixel = Adafruit_NeoPixel(NUM_PIXELS, NEOPIXEL_PIN, RGB_SETTING + NEO_KHZ800);
 
 String activeAnimation = ANIM_DISABLED;
+boolean animationChanged = false;
 
 void setup() {
   Serial.begin(115200);
@@ -100,7 +101,8 @@ void playRainbowAnimation() {
       for (j = 0; j < NUM_PIXELS; j++) {
         neoPixel.setPixelColor(j, Wheel((i + j) & 255));
 
-        if (!animationEnabled()) {
+        if (!animationEnabled() || animationChanged) {
+          animationChanged = false;
           return;
         }
       }
@@ -122,7 +124,7 @@ void playMeteorRainAnimation() {
     for (i = 0; i < NUM_PIXELS * 2; i++) {
       for (j = 0; j < NUM_PIXELS; j++) {
         if (random(10) < 5) {
-          if (!animationEnabled()) {
+          if (!animationEnabled() || animationChanged) {
             return;
           }
           fadeToBlack(j, meteorTrailDecay);
@@ -131,7 +133,7 @@ void playMeteorRainAnimation() {
   
       for (k = 0; k < meteorSize; k++) {
         if ((i - j < NUM_PIXELS) && (i - j >= 0)) {
-          if (!animationEnabled()) {
+          if (!animationEnabled() || animationChanged) {
             return;
           }
           neoPixel.setPixelColor(i - j, r, g, b);
@@ -200,6 +202,7 @@ void toggleAnimation(AsyncWebServerRequest *request) {
   else {
     // Enable animation
     activeAnimation = animationId;
+    animationChanged = true;
   }
   
   request->send(200, "text/plain", activeAnimation);
