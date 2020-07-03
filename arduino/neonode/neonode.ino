@@ -82,6 +82,10 @@ void processAnimation() {
     allOff();
     playRainbowAnimation();
   }
+  else if (activeAnimation == ANIMATIONS[1]) {
+    allOff();
+    playMeteorRainAnimation();
+  }
 }
 
 bool animationEnabled() {
@@ -114,21 +118,29 @@ void playMeteorRainAnimation() {
   boolean meteroRandomDecay = true;
   int speedDelay = 30;
 
-  for (i = 0; i < NUM_PIXELS * 2; i++) {
-    for (j = 0; j < NUM_PIXELS; j++) {
-      if (random(10) < 5) {
-        fadeToBlack(j, meteorTrailDecay);
+  while (animationEnabled()) {
+    for (i = 0; i < NUM_PIXELS * 2; i++) {
+      for (j = 0; j < NUM_PIXELS; j++) {
+        if (random(10) < 5) {
+          if (!animationEnabled()) {
+            return;
+          }
+          fadeToBlack(j, meteorTrailDecay);
+        }
       }
-    }
-
-    for (k = 0; k < meteorSize; k++) {
-      if ((i - j < NUM_PIXELS) && (i - j >= 0)) {
-        neoPixel.setPixelColor(i - j, r, g, b);
+  
+      for (k = 0; k < meteorSize; k++) {
+        if ((i - j < NUM_PIXELS) && (i - j >= 0)) {
+          if (!animationEnabled()) {
+            return;
+          }
+          neoPixel.setPixelColor(i - j, r, g, b);
+        }
       }
+  
+      neoPixel.show();
+      delay(speedDelay);
     }
-
-    neoPixel.show();
-    delay(speedDelay);
   }
 }
 
