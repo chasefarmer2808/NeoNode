@@ -8,10 +8,10 @@
 
 // Update these values for your specific Neopixel strip.
 #define NEOPIXEL_PIN 12
-#define NUM_PIXELS 3
+#define NUM_PIXELS 118
 #define NUM_ANIMATIONS 2
 #define BRIGHTNESS 50
-#define RGB_SETTING NEO_GRB
+#define RGB_SETTING NEO_GRBW
 
 const char *STRIP_TYPE = "strip";
 const char *ANIM_DISABLED = "\0";
@@ -52,7 +52,8 @@ void setup() {
   printConnectionInfo();
 
   server.on("/", HTTP_GET, sendHeartbeat);
-  server.on("/neopixel", HTTP_POST, setPixels);
+  server.on("/pixel", HTTP_POST, setPixel);
+  server.on("/pixels", HTTP_POST, fillPixels);
   server.on("/neopixel/info", HTTP_GET, sendNeopixelInfo);
   server.on("/animation", HTTP_POST, toggleAnimation);
 
@@ -107,7 +108,7 @@ void playRainbowAnimation() {
         }
       }
       neoPixel.show();
-      delay(20);
+      delay(3);
     }
   }
 }
@@ -150,24 +151,43 @@ void sendHeartbeat(AsyncWebServerRequest *request) {
   request->send(200, "text/plain", "Success");
 }
 
-void setPixels(AsyncWebServerRequest *request) {
+void setPixel(AsyncWebServerRequest *request) {
   // Make sure body is not empty.
-  if (!request->hasParam("pixels", true)) {
-    return request->send(400, "text/plain", "Pixel color array required.");
+  if (!request->hasParam("index", true)) {
+    return request->send(400, "text/plain", "Pixel index required.");
   }
 
-  // Need to build a special size variable.
-  const size_t ARRAY_SIZE = JSON_ARRAY_SIZE(NUM_PIXELS);
-  String rawArray = request->getParam("pixels", true)->value();
-  StaticJsonDocument<ARRAY_SIZE> arrayBuf;
-  deserializeJson(arrayBuf, rawArray);
-  JsonArray colorArray = arrayBuf.as<JsonArray>();
-  
+  if (!request->hasParam("color", true)) {
+    return request->send(400, "text/plain", "Pixel color required.");
+  }
+
+  int index = request->getParam("index", true)->value().toInt();
+  uint32_t color = request->getParam("color", true)->value().toInt();
+
+  Serial.println(index);
+  Serial.println(color);
+
+  neoPixel.setPixelColor(index, color);
+  neoPixel.show();
+
+  request->send(200);
+}
+
+void fillPixels(AsyncWebServerRequest *request) {
+  // Make sure body is not empty.
+  if (!request->hasParam("color", true)) {
+    return request->send(400, "text/plain", "Pixel color required.");
+  }
+
+  uint32_t color = request->getParam("color", true)->value().toInt();
+
+  // Fill the strip in a little animation.
   for (int i = 0; i < NUM_PIXELS; i++) {
-    neoPixel.setPixelColor(i, colorArray[i].as<uint32_t>());
+    neoPixel.setPixelColor(i, color);
 
     // For some reason, putting this in the loop makes the first pixel the correct color.
     neoPixel.show();
+    delay(10);
   }
   
   request->send(200);
