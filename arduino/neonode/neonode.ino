@@ -187,7 +187,7 @@ void fillPixels(AsyncWebServerRequest *request) {
 
     // For some reason, putting this in the loop makes the first pixel the correct color.
     neoPixel.show();
-    delay(10);
+    delay(5);
   }
   
   request->send(200);
